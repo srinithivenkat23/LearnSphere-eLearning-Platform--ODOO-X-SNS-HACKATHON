@@ -26,9 +26,35 @@ router.get('/course/:courseId', async (req, res) => {
 // CREATE quiz
 router.post('/', async (req, res) => {
     try {
-        const quiz = await Quiz.create(req.body);
+        let quizData = req.body;
+
+        // If no lessonId provided, create a lesson first
+        if (!quizData.lessonId) {
+            const Lesson = require('../models/Lesson');
+            const lesson = await Lesson.create({
+                courseId: quizData.courseId,
+                title: quizData.title || 'Quiz Lesson',
+                type: 'quiz',
+                contentUrl: 'temp', // Will be updated with quiz ID
+                duration: 15,
+                order: 999 // Place at end, instructor can reorder
+            });
+            quizData.lessonId = lesson._id;
+        }
+
+        const quiz = await Quiz.create(quizData);
+
+        // Update lesson's contentUrl with quiz ID
+        if (quiz.lessonId) {
+            const Lesson = require('../models/Lesson');
+            await Lesson.findByIdAndUpdate(quiz.lessonId, {
+                contentUrl: quiz._id.toString()
+            });
+        }
+
         res.status(201).json(quiz);
     } catch (err) {
+        console.error('Quiz creation error:', err);
         res.status(500).json({ message: err.message });
     }
 });

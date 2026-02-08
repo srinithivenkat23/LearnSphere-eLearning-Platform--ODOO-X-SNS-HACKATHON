@@ -32,6 +32,18 @@ router.get('/instructor/:instructorId', async (req, res) => {
     }
 });
 
+// GET all attempts for a quiz (Instructor/Admin)
+router.get('/quiz/:quizId', async (req, res) => {
+    try {
+        const attempts = await Attempt.find({ quizId: req.params.quizId })
+            .populate('userId', 'name email')
+            .sort({ createdAt: -1 });
+        res.json(attempts);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // GET all attempts (Admin)
 router.get('/all', async (req, res) => {
     try {

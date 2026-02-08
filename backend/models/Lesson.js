@@ -6,6 +6,9 @@ const lessonSchema = new mongoose.Schema({
     description: { type: String },
     type: { type: String, enum: ['video', 'document', 'image', 'quiz'], default: 'video' },
     contentUrl: { type: String },
+    videoUrl: { type: String }, // URL/path to uploaded video
+    videoDuration: { type: Number }, // Duration in seconds
+    thumbnailUrl: { type: String }, // Video thumbnail
     duration: { type: String },
     responsibleId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     responsibleName: { type: String },

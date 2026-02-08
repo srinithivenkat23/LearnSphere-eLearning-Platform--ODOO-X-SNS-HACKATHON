@@ -137,6 +137,46 @@ router.post('/lesson-video', authMiddleware, uploadLessonVideo.single('video'), 
     }
 });
 
+// Upload lesson document
+router.post('/lesson-document', authMiddleware, require('../config/uploadConfig').uploadLessonDocument.single('document'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const { lessonId } = req.body;
+        const filename = req.file.filename;
+
+        if (lessonId) {
+            // Update existing lesson
+            const lesson = await Lesson.findByIdAndUpdate(
+                lessonId,
+                {
+                    contentUrl: `/uploads/documents/${filename}`
+                },
+                { new: true }
+            );
+
+            if (!lesson) {
+                fs.unlinkSync(req.file.path);
+                return res.status(404).json({ error: 'Lesson not found' });
+            }
+        }
+
+        res.json({
+            message: 'Document uploaded successfully',
+            filename: filename,
+            url: `/uploads/documents/${filename}`
+        });
+    } catch (error) {
+        if (req.file) {
+            fs.unlinkSync(req.file.path);
+        }
+        console.error('Document upload error:', error);
+        res.status(500).json({ error: 'Failed to upload document' });
+    }
+});
+
 // Delete file
 router.delete('/file/:filename', authMiddleware, async (req, res) => {
     try {
@@ -150,6 +190,8 @@ router.delete('/file/:filename', authMiddleware, async (req, res) => {
             filePath = path.join(__dirname, '../uploads/courses', filename);
         } else if (filename.startsWith('video-')) {
             filePath = path.join(__dirname, '../uploads/videos', filename);
+        } else if (filename.startsWith('doc-')) {
+            filePath = path.join(__dirname, '../uploads/documents', filename);
         } else {
             return res.status(400).json({ error: 'Invalid filename' });
         }
@@ -164,20 +206,6 @@ router.delete('/file/:filename', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error('File deletion error:', error);
         res.status(500).json({ error: 'Failed to delete file' });
-    }
-});
-
-// Legacy upload endpoint (for backward compatibility)
-router.post('/', authMiddleware, uploadCourseImage.single('file'), (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: 'No file uploaded' });
-        }
-
-        const fileUrl = `http://localhost:5000/uploads/courses/${req.file.filename}`;
-        res.json({ url: fileUrl, filename: req.file.originalname });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
     }
 });
 

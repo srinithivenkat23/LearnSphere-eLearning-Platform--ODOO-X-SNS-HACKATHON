@@ -6,7 +6,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
 import Modal from '../../components/ui/Modal';
-import { ArrowLeft, Save, Plus, Trash2, CheckCircle, HelpCircle, Trophy, Settings2, GripVertical, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, CheckCircle, HelpCircle, Trophy, Settings2, GripVertical, Sparkles, Shield } from 'lucide-react';
 
 export default function QuizBuilder() {
     const { courseId, quizId } = useParams();
@@ -24,14 +24,17 @@ export default function QuizBuilder() {
 
     const [quiz, setQuiz] = useState({
         title: 'New Quiz',
+        description: '',
         questions: [],
         lessonId: lessonIdFromUrl || null,
+        passingScore: 70,
         rewards: {
             attempt1: 100,
             attempt2: 50,
             attempt3: 25,
             attempt4Plus: 10
-        }
+        },
+        proctoringEnabled: false
     });
 
     const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
@@ -178,6 +181,18 @@ export default function QuizBuilder() {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
+                    <div className="flex items-center mr-4 bg-slate-100 rounded-lg p-1">
+                        <button
+                            onClick={() => setQuiz({ ...quiz, proctoringEnabled: !quiz.proctoringEnabled })}
+                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 ${quiz.proctoringEnabled
+                                ? 'bg-white text-blue-600 shadow-sm'
+                                : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                        >
+                            <Shield size={14} />
+                            {quiz.proctoringEnabled ? 'Proctoring ON' : 'Proctoring OFF'}
+                        </button>
+                    </div>
                     <Button
                         onClick={handleAIGenerate}
                         disabled={generatingAI}

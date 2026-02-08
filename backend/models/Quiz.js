@@ -19,6 +19,7 @@ const quizSchema = new mongoose.Schema({
         attempt3: { type: Number, default: 25 },
         attempt4Plus: { type: Number, default: 10 }
     },
+    proctoringEnabled: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
 });
 

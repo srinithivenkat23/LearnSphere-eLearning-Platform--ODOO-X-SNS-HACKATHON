@@ -35,9 +35,8 @@ const seedData = async () => {
             imageUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
             tags: ['React', 'JavaScript', 'Web Development'],
             category: 'Development',
-            instructorName: 'John Doe',
             published: true,
-            accessRule: 'free',
+            accessRule: 'open',
             rating: 4.8,
             reviewsCount: 1,
             studentsCount: 1500,
@@ -56,7 +55,7 @@ const seedData = async () => {
             category: 'Design',
             instructorName: 'Jane Smith',
             published: true,
-            accessRule: 'free',
+            accessRule: 'open',
             rating: 4.9,
             reviewsCount: 85,
             studentsCount: 950,
@@ -72,7 +71,7 @@ const seedData = async () => {
             category: 'Development',
             instructorName: 'Bob Wilson',
             published: true,
-            accessRule: 'paid',
+            accessRule: 'payment',
             price: 29.99,
             rating: 4.7,
             reviewsCount: 45,
@@ -90,17 +89,17 @@ const seedData = async () => {
                 contentUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
                 duration: '10:00',
                 order: 1,
-                attachments: [{ name: 'React Introduction PDF', url: '#', type: 'pdf' }]
+                attachments: [{ name: 'React Introduction PDF', url: '#', type: 'file' }]
             },
             {
                 courseId: reactCourse._id,
                 title: 'JSX and Components',
                 description: 'Deep dive into JSX syntax and building your first functional component.',
                 type: 'video',
-                contentUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+                contentUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
                 duration: '15:20',
                 order: 2,
-                attachments: [{ name: 'JSX Cheatsheet', url: '#', type: 'image' }]
+                attachments: [{ name: 'JSX Cheatsheet', url: '#', type: 'file' }]
             },
             {
                 courseId: reactCourse._id,

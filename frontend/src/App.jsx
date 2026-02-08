@@ -11,6 +11,7 @@ import CourseEditor from "./pages/instructor/CourseEditor";
 import QuizBuilder from "./pages/instructor/QuizBuilder";
 import InstructorReporting from "./pages/instructor/Reporting";
 import InstructorSettings from "./pages/instructor/Settings";
+import QuizResults from "./pages/instructor/QuizResults";
 import LearnerLayout from "./components/layout/LearnerLayout";
 import CourseCatalog from "./pages/learner/CourseCatalog";
 import MyCourses from "./pages/learner/MyCourses";
@@ -76,6 +77,7 @@ function App() {
             <Route path="courses" element={<InstructorCourses />} />
             <Route path="courses/:courseId" element={<CourseEditor />} />
             <Route path="courses/:courseId/quiz/:quizId" element={<QuizBuilder />} />
+            <Route path="courses/:courseId/quiz/:quizId/results" element={<QuizResults />} />
             <Route path="reports" element={<InstructorReporting />} />
             <Route path="settings" element={<InstructorSettings />} />
           </Route>

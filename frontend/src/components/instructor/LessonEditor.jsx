@@ -70,18 +70,45 @@ const LessonEditor = ({ isOpen, onClose, onSave, lesson = null, quizzes = [] }) 
         formDataUpload.append('file', file);
 
         try {
-            const response = await axios.post(`${API_URL}/upload`, formDataUpload, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            let response;
 
-            if (response.data.url) {
+            // Choose the correct upload function based on type
+            if (type === 'video') {
+                // For main lesson video
+                const { uploadLessonVideo } = await import('../../services/uploadAPI');
+                response = await uploadLessonVideo(file);
+            } else if (type === 'document') {
+                // For main lesson document
+                const { uploadLessonDocument } = await import('../../services/uploadAPI');
+                response = await uploadLessonDocument(file);
+            } else if (type === 'image') {
+                // For main lesson image (not currently supported in API but can use generic or add one)
+                // For now, let's use course image upload as a fallback or add a generic file upload
+                // NOTE: Using course image upload might put it in course folder, but it works for now. 
+                // Better approach: Add lesson-image endpoint. For now, assuming generic file upload or course-image
+                const { uploadCourseImage } = await import('../../services/uploadAPI');
+                response = await uploadCourseImage(file);
+            } else if (type === 'file' || attachmentIndex !== null) {
+                // For attachments (files/images)
+                // If it's an attachment, we can use the document upload as it's the most generic 'file' storage
+                const { uploadLessonDocument } = await import('../../services/uploadAPI'); // Re-using document upload for attachments
+                response = await uploadLessonDocument(file);
+            } else {
+                // Fallback for unknown types
+                throw new Error("Unsupported file type");
+            }
+
+            // Standardize response format if needed, but API usually returns { url: ... }
+            const fileUrl = response.url || response.data?.url;
+
+            if (fileUrl) {
                 if (attachmentIndex !== null) {
-                    updateAttachment(attachmentIndex, 'url', response.data.url);
+                    updateAttachment(attachmentIndex, 'url', fileUrl);
                     if (!formData.attachments[attachmentIndex].name) {
                         updateAttachment(attachmentIndex, 'name', file.name);
                     }
                 } else {
-                    setFormData(prev => ({ ...prev, contentUrl: response.data.url }));
+                    setFormData(prev => ({ ...prev, contentUrl: fileUrl }));
                 }
             }
         } catch (err) {

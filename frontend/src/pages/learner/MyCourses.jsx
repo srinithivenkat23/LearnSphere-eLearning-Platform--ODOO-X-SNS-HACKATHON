@@ -7,7 +7,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { PlayCircle, CheckCircle, Clock, Trophy, Star, BookOpen, ChevronRight, LayoutGrid, List, Award, Shield, Users, Search, Download } from 'lucide-react';
 import Certificate from '../../components/learner/Certificate';
-import DailyGoalsWidget from '../../components/learner/DailyGoalsWidget';
+import GamificationSection from '../../components/learner/GamificationSection';
 
 export default function MyCourses() {
     const { userData } = useAuth();
@@ -129,8 +129,8 @@ export default function MyCourses() {
                             </div>
                         </div>
 
-                        {/* BYJU'S Daily Goals Widget */}
-                        <DailyGoalsWidget />
+                        {/* BYJU'S Daily Goals, Streaks & Achievements */}
+                        <GamificationSection userData={userData} columns={1} />
                     </div>
 
                     {/* Right Side: Courses */}

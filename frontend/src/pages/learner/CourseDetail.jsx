@@ -4,7 +4,9 @@ import axios from 'axios';
 const API_URL = 'http://localhost:5000/api';
 import { PlayCircle, Search, BookOpen, Clock, Users, Zap, Shield, Globe, ArrowRight, Award, CheckCircle, Star, Lock } from 'lucide-react';
 import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
 import Reviews from '../../components/learner/Reviews';
+import EnrollmentModal from '../../components/learner/EnrollmentModal';
 
 import { useAuth } from '../../context/AuthContext';
 
@@ -20,6 +22,7 @@ export default function CourseDetail() {
     const [activeTab, setActiveTab] = useState('about');
     const [scrolled, setScrolled] = useState(false);
     const [lessonSearch, setLessonSearch] = useState('');
+    const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 400);
@@ -54,21 +57,23 @@ export default function CourseDetail() {
         }
     };
 
-    const handleEnroll = async () => {
+    const handleEnroll = () => {
         if (!user) {
             navigate('/login');
             return;
         }
+        setIsEnrollModalOpen(true);
+    };
 
-        if (course.accessRule === 'paid') {
-            const confirmed = window.confirm(`This course costs $${course.price}. Proceed to mock payment?`);
-            if (!confirmed) return;
-        }
-
+    const handleFinalEnroll = async (studentDetails) => {
         setEnrolling(true);
         try {
-            await axios.post(`${API_URL}/enrollments/enroll`, { courseId });
+            await axios.post(`${API_URL}/enrollments/enroll`, {
+                courseId,
+                studentDetails
+            });
             alert("Successfully enrolled!");
+            setIsEnrollModalOpen(false);
             loadCourseData();
         } catch (err) {
             console.error(err);
@@ -342,6 +347,14 @@ export default function CourseDetail() {
                     </div>
                 </div>
             </div>
+            <EnrollmentModal
+                isOpen={isEnrollModalOpen}
+                onClose={() => setIsEnrollModalOpen(false)}
+                onEnroll={handleFinalEnroll}
+                courseTitle={course.title}
+                isPaid={course.accessRule === 'payment'}
+                price={course.price}
+            />
         </div>
     );
 }

@@ -89,6 +89,13 @@ const QuizTab = ({ course }) => {
                                         </div>
                                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
+                                                onClick={() => navigate(`/instructor/courses/${courseId}/quiz/${quizId}/results`)}
+                                                className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-slate-50 rounded-lg transition-colors"
+                                                title="View Student Results"
+                                            >
+                                                <GraduationCap size={18} />
+                                            </button>
+                                            <button
                                                 onClick={() => navigate(`/instructor/courses/${courseId}/quiz/${quizId}`)}
                                                 className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition-colors"
                                                 title="Edit Quiz"

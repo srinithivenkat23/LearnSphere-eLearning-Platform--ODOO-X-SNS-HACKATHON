@@ -8,6 +8,16 @@ const attemptSchema = new mongoose.Schema({
     total: { type: Number, required: true },
     passed: { type: Boolean, required: true },
     answers: { type: mongoose.Schema.Types.Mixed },
+    proctoring: {
+        tabSwitches: { type: Number, default: 0 },
+        fullScreenExits: { type: Number, default: 0 },
+        violations: [{
+            type: { type: String },
+            timestamp: { type: Date }
+        }],
+        webcamEnabled: { type: Boolean, default: false },
+        timePerQuestion: [{ type: Number }]
+    },
     createdAt: { type: Date, default: Date.now }
 });
 

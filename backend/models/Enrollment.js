@@ -11,7 +11,14 @@ const enrollmentSchema = new mongoose.Schema({
     completedAt: { type: Date },
     lastActive: { type: Date, default: Date.now },
     timeSpent: { type: Number, default: 0 }, // In minutes
-    progress: { type: Map, of: Object, default: {} } // Stores lesson completion status
+    progress: { type: Map, of: Object, default: {} }, // Stores lesson completion status
+    studentDetails: {
+        fullName: String,
+        phone: String,
+        education: String,
+        occupation: String,
+        reason: String
+    }
 });
 
 module.exports = mongoose.model('Enrollment', enrollmentSchema);

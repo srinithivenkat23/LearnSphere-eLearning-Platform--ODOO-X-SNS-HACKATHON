@@ -21,7 +21,7 @@ router.get('/my-courses', async (req, res) => {
 // POST enroll in a course (The "Join" or "Buy" move)
 router.post('/enroll', async (req, res) => {
     try {
-        const { courseId } = req.body;
+        const { courseId, studentDetails } = req.body;
         const user = await User.findOne({ role: 'learner' }); // Mocked current user
 
         if (!user) return res.status(404).json({ message: 'User not found' });
@@ -33,6 +33,7 @@ router.post('/enroll', async (req, res) => {
         const enrollment = await Enrollment.create({
             userId: user._id,
             courseId: courseId,
+            studentDetails: studentDetails,
             progressPercent: 0,
             lastActive: new Date()
         });

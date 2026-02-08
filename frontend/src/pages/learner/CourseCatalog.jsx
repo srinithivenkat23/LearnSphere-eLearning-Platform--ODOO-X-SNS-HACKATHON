@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import LoadingSpinner, { SkeletonCard } from '../../components/ui/LoadingSpinner';
+import EnrollmentModal from '../../components/learner/EnrollmentModal';
 
 export default function CourseCatalog() {
     const { user, userData } = useAuth();
@@ -20,6 +21,8 @@ export default function CourseCatalog() {
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [priceFilter, setPriceFilter] = useState('All'); // 'All', 'Free', 'Paid'
+    const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+    const [selectedCourseForEnroll, setSelectedCourseForEnroll] = useState(null);
 
     const categories = ['All', 'Technology', 'Business', 'Design', 'Data Science', 'Personal Development'];
 
@@ -45,7 +48,7 @@ export default function CourseCatalog() {
             // If user is logged in, fetch their enrollments
             if (user) {
                 const enResponse = await axios.get(`${API_URL}/enrollments/my-courses`);
-                setMyEnrollments(enResponse.data);
+                setMyEnrollments(enResponse.data.filter(e => e.courseId));
             }
         } catch (error) {
             console.error("Error fetching courses:", error);
@@ -54,16 +57,24 @@ export default function CourseCatalog() {
         }
     };
 
-    const handleJoinCourse = async (courseId) => {
+    const handleJoinCourse = (course) => {
         if (!user) {
             navigate('/login');
             return;
         }
+        setSelectedCourseForEnroll(course);
+        setIsEnrollModalOpen(true);
+    };
 
+    const handleFinalEnroll = async (studentDetails) => {
         try {
-            const response = await axios.post(`${API_URL}/enrollments/enroll`, { courseId });
+            const response = await axios.post(`${API_URL}/enrollments/enroll`, {
+                courseId: selectedCourseForEnroll._id,
+                studentDetails
+            });
             // Refresh enrollments and list
             alert(`Succesfully joined! You earned 10 points. New balance: ${response.data.userPoints}`);
+            setIsEnrollModalOpen(false);
             fetchCourses();
         } catch (error) {
             console.error("Error joining course:", error);
@@ -159,16 +170,16 @@ export default function CourseCatalog() {
                     ))}
                 </div>
 
-                {/* Price Filter */}
+                {/* Price Filter - Emerald Styling */}
                 <div className="flex items-center gap-3 mt-4">
-                    <span className="text-sm font-bold text-slate-700">Price:</span>
+                    <span className="text-sm font-bold text-slate-700">Filter Price:</span>
                     {['All', 'Free', 'Paid'].map(filter => (
                         <button
                             key={filter}
                             onClick={() => setPriceFilter(filter)}
-                            className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all ${priceFilter === filter
-                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            className={`px-6 py-1.5 rounded-full text-sm font-bold transition-all duration-300 transform active:scale-95 ${priceFilter === filter
+                                ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-500/20 ring-2 ring-emerald-500 ring-offset-2'
+                                : 'bg-slate-50 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600 border border-slate-100'
                                 }`}
                         >
                             {filter}
@@ -179,7 +190,11 @@ export default function CourseCatalog() {
 
             {/* Resume Learning Section (Logged in only) */}
             {user && myEnrollments.length > 0 && selectedCategory === 'All' && !searchTerm && (
-                <div className="bg-blue-50/50 py-12">
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-blue-50/50 py-12"
+                >
                     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold text-gray-900">Welcome back, {userData?.name || 'Scholar'}! Resume your courses:</h2>
@@ -187,141 +202,138 @@ export default function CourseCatalog() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {myEnrollments.slice(0, 3).map(enroll => (
-                                <Card key={enroll._id} className="p-4 flex gap-4 bg-white/80 border-blue-100">
+                                <Card key={enroll._id} className="p-4 flex gap-4 bg-white/80 border-blue-100 hover:shadow-lg transition-all duration-300">
                                     <div className="w-20 h-20 bg-gray-200 rounded overflow-hidden shrink-0">
-                                        <img src={enroll.courseData?.imageUrl} alt="" className="w-full h-full object-cover" />
+                                        <img src={enroll.courseId?.imageUrl} alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-gray-900 text-sm truncate mb-1">{enroll.courseData?.title}</h3>
+                                        <h3 className="font-bold text-gray-900 text-sm truncate mb-1">{enroll.courseId?.title}</h3>
                                         <div className="flex items-center justify-between text-[10px] text-gray-500 mb-2">
                                             <span>{enroll.progressPercent}% Complete</span>
                                         </div>
-                                        <div className="h-1 bg-gray-100 rounded-full overflow-hidden mb-3">
+                                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-3">
                                             <div className="h-full bg-blue-600" style={{ width: `${enroll.progressPercent}%` }}></div>
                                         </div>
-                                        <Button size="sm" onClick={() => navigate(`/courses/${enroll.courseId}/learn`)} className="h-8 py-0 px-4 text-xs">Resume</Button>
+                                        <Button size="sm" onClick={() => navigate(`/courses/${enroll.courseId?._id}/learn`)} className="h-8 py-0 px-4 text-xs">Resume</Button>
                                     </div>
                                 </Card>
                             ))}
                         </div>
                     </div>
-                </div>
+                </motion.div>
             )}
 
             {/* Featured Courses Section */}
             <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <div className="flex justify-between items-end mb-8">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                            {searchTerm ? `Results for "${searchTerm}"` : selectedCategory === 'All' ? 'Most Popular Courses' : `${selectedCategory} Courses`}
+                        <h2 className="text-3xl font-bold text-slate-900 mb-2">
+                            {searchTerm ? `Results for "${searchTerm}"` : selectedCategory === 'All' ? 'Popular Courses' : `${selectedCategory} Courses`}
                         </h2>
-                        <p className="text-gray-600">Explore our highest-rated courses in {selectedCategory === 'All' ? 'all categories' : selectedCategory}</p>
+                        <p className="text-slate-500">Pick a course and start your learning goal today</p>
                     </div>
                 </div>
 
                 {loading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                         {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
                             <SkeletonCard key={i} />
                         ))}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {filteredCourses.length > 0 ? filteredCourses.map((course, index) => {
-                            const isEnrolled = myEnrollments.some(e => e.courseId?._id === course._id);
-                            const enrollment = myEnrollments.find(e => e.courseId?._id === course._id);
-                            const hasStarted = isEnrolled && enrollment.progressPercent > 0;
-                            const isPaid = course.accessRule === 'paid';
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                            visible: {
+                                transition: {
+                                    staggerChildren: 0.1
+                                }
+                            }
+                        }}
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+                    >
+                        {filteredCourses.length > 0 ? filteredCourses.map((course) => {
+                            const isEnrolled = myEnrollments.some(e => (e.courseId?._id || e.courseId) === course._id);
 
                             return (
                                 <motion.div
                                     key={course._id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.05, duration: 0.4 }}
-                                    whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                                    className="group bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-2xl hover:border-blue-200 transition-all duration-300 flex flex-col"
+                                    variants={{
+                                        hidden: { opacity: 0, y: 20 },
+                                        visible: { opacity: 1, y: 0 }
+                                    }}
+                                    transition={{ duration: 0.5, ease: "easeOut" }}
+                                    whileHover={{ y: -10 }}
+                                    className="group bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col h-full ring-1 ring-slate-100 ring-inset"
                                 >
-                                    <Link to={`/courses/${course._id}`} className="block relative h-40 bg-gray-200 overflow-hidden">
-                                        {(course.thumbnail || course.imageUrl) ? (
-                                            <img src={course.thumbnail || course.imageUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 text-white/30">
-                                                <BookOpen size={40} />
-                                            </div>
-                                        )}
-                                        {/* FREE/PAID Badge */}
-                                        {course.isPaid ? (
-                                            <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg">
-                                                ₹{course.price}
-                                            </div>
-                                        ) : (
-                                            <div className="absolute top-2 right-2 bg-gradient-to-r from-emerald-400 to-green-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg">
-                                                FREE
-                                            </div>
-                                        )}
+                                    <Link to={`/courses/${course._id}`} className="block relative h-48 bg-slate-100 overflow-hidden">
+                                        <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-4">
+                                            <span className="text-white text-xs font-bold flex items-center gap-1">
+                                                <Star size={12} className="text-yellow-400 fill-current" /> {course.rating} / 5.0
+                                            </span>
+                                        </div>
+                                        {/* Price Badge - Premium Gradient */}
+                                        <div className={`absolute top-4 right-4 ${course.isPaid ? 'bg-indigo-600 shadow-indigo-500/30' : 'bg-emerald-500 shadow-emerald-500/30'} text-white text-[11px] font-black px-4 py-1.5 rounded-full shadow-lg backdrop-blur-md`}>
+                                            {course.isPaid ? `₹${course.price.toLocaleString()}` : 'FREE'}
+                                        </div>
                                     </Link>
 
-                                    <div className="p-4 flex-1 flex flex-col">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-6 h-6 bg-gray-100 rounded-sm overflow-hidden flex items-center justify-center text-[10px] font-bold text-gray-400">LS</div>
-                                            <span className="text-xs font-semibold text-gray-700 truncate">University of LearnSphere</span>
+                                    <div className="p-5 flex-1 flex flex-col">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[10px] font-bold uppercase tracking-wider">{course.category}</span>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{course.duration}</span>
                                         </div>
 
-                                        <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-blue-600 transition-colors">
+                                        <h3 className="font-bold text-slate-900 mb-3 line-clamp-2 text-lg leading-snug group-hover:text-blue-600 transition-colors">
                                             {course.title}
                                         </h3>
 
-                                        <div className="flex flex-wrap gap-1 mb-4">
-                                            {course.tags?.slice(0, 2).map((tag, i) => (
-                                                <span key={i} className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter bg-gray-50 px-1.5 py-0.5 rounded italic">#{tag}</span>
-                                            ))}
-                                        </div>
+                                        <p className="text-slate-500 text-sm line-clamp-2 mb-4 leading-relaxed overflow-hidden">
+                                            {course.shortDescription || course.description}
+                                        </p>
 
-                                        <div className="flex items-center gap-1.5 mb-4">
-                                            <div className="flex text-yellow-400">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <Star key={i} size={12} className={i < Math.floor(course.rating || 0) ? "fill-current" : "text-slate-200"} />
-                                                ))}
+                                        <div className="mt-auto pt-5 border-t border-slate-50 flex items-center justify-between gap-4">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="flex -space-x-2">
+                                                    {[...Array(3)].map((_, i) => (
+                                                        <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
+                                                            <img src={`https://i.pravatar.cc/100?u=${course._id}${i}`} alt="" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">+{course.studentsCount || 0} Learners</span>
                                             </div>
-                                            <span className="text-[10px] font-bold text-slate-500">
-                                                {course.rating ? Number(course.rating).toFixed(1) : '0.0'} ({course.reviewsCount || 0})
-                                            </span>
-                                        </div>
 
-                                        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between gap-4">
-                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                                {course.studentsCount || 0} Students
-                                            </div>
                                             <Button
                                                 size="sm"
-                                                className="h-8 py-0 px-4 text-xs font-bold"
-                                                variant={isEnrolled ? "outline" : isPaid ? "primary" : "outline"}
+                                                className={`h-9 py-0 px-6 text-xs font-black rounded-xl transition-all ${isEnrolled ? 'bg-slate-100 text-slate-700 shadow-none' : 'shadow-lg'}`}
+                                                variant={isEnrolled ? "outline" : course.isPaid ? "primary" : "secondary"}
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     if (isEnrolled) {
                                                         navigate(`/courses/${course._id}/learn`);
-                                                    } else if (course.accessRule === 'free') {
-                                                        handleJoinCourse(course._id);
                                                     } else {
-                                                        navigate(`/courses/${course._id}`); // Go to detail/buy page
+                                                        handleJoinCourse(course);
                                                     }
                                                 }}
                                             >
-                                                {!user ? 'Join Course' : isEnrolled ? (hasStarted ? 'Continue' : 'Start') : isPaid ? `Buy $${course.price}` : 'Enroll'}
+                                                {!user ? 'Join Now' : isEnrolled ? 'Learned' : course.isPaid ? 'Grab Now' : 'Enroll Free'}
                                             </Button>
                                         </div>
                                     </div>
                                 </motion.div>
                             );
                         }) : (
-                            <div className="col-span-full py-20 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                            <div className="col-span-full py-20 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                                 <Search size={48} className="mx-auto text-slate-300 mb-4" />
-                                <h3 className="text-lg font-bold text-slate-900">No courses match your criteria</h3>
+                                <h3 className="text-xl font-bold text-slate-900">No courses match your criteria</h3>
                                 <p className="text-slate-500">Try adjusting your filters or search term.</p>
+                                <Button variant="secondary" className="mt-6" onClick={() => { setSearchTerm(''); setPriceFilter('All'); setSelectedCategory('All'); }}>Reset All Filters</Button>
                             </div>
                         )}
-                    </div>
+                    </motion.div>
                 )}
             </div>
 
@@ -374,6 +386,15 @@ export default function CourseCatalog() {
                     </Link>
                 </div>
             </div>
-        </div>
+
+            <EnrollmentModal
+                isOpen={isEnrollModalOpen}
+                onClose={() => setIsEnrollModalOpen(false)}
+                onEnroll={handleFinalEnroll}
+                courseTitle={selectedCourseForEnroll?.title}
+                isPaid={selectedCourseForEnroll?.isPaid}
+                price={selectedCourseForEnroll?.price}
+            />
+        </div >
     );
 }
